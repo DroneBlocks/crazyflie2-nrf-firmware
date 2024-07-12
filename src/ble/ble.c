@@ -288,6 +288,9 @@ static void timers_init(void)
        APP_ERROR_CHECK(err_code); */
 }
 
+#define DEVICE_NAME_PREFIX "Crazyflie-"
+#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME_PREFIX) + 6)
+
 
 /**@brief Function for the GAP initialization.
  *
@@ -302,9 +305,19 @@ static void gap_params_init(void)
 
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 
+    uint32_t device_addr[2];
+    char device_name[DEVICE_NAME_LEN];
+    
+    // Read the device address from NRF_FICR
+    device_addr[0] = NRF_FICR->DEVICEADDR[0];
+    device_addr[1] = NRF_FICR->DEVICEADDR[1] & 0x0000FFFF; // 48-bit address
+
+    // Convert device address to string
+    snprintf(device_name, DEVICE_NAME_LEN, "%s%02lX%04lX", DEVICE_NAME_PREFIX, (device_addr[1] >> 8) & 0xFF, device_addr[1] & 0xFFFF);
+
     err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                          (const uint8_t *)DEVICE_NAME,
-                                          strlen(DEVICE_NAME));
+                                          (const uint8_t *)device_name,
+                                          strlen(device_name));
     APP_ERROR_CHECK(err_code);
 
     // YOUR_JOB: Use an appearance value matching the application's use case.
